@@ -112,7 +112,6 @@ export default function SupportInstitutionsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Instituciones de Apoyo</h1>
             <p className="text-muted-foreground">Gestiona las instituciones que brindan apoyo</p>

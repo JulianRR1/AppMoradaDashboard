@@ -14,11 +14,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { toast } = useToast();
   const router = useRouter();
   const [showPw, setShowPw] = useState(false);
@@ -33,6 +35,7 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const response = await api.post("auth/admin/login", formData);
       const data = response.data;
@@ -41,20 +44,20 @@ export default function Login() {
       if (!data.token) throw new Error("No se recibió el token");
       console.log("Usuario:", data.token);
       sessionStorage.setItem("token", data.token);
-      toast({
-        title: "Sesión iniciada",
-        description: "Redirigiendo al panel...",
-      });
       router.push("/dashboard");
     } catch (error) {
-      toast({
-        title: "Error al iniciar sesión",
-        description:
-          error?.response?.data?.message ||
-          error.message ||
-          "No se pudo iniciar sesión",
-        variant: "destructive",
-      });
+      if (error?.response?.status === 401) {
+        setError("Correo electrónico o contraseña incorrectos");
+      } else {
+        toast({
+          title: "Error al iniciar sesión",
+          description:
+            error?.response?.data?.message ||
+            error.message ||
+            "No se pudo iniciar sesión",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -69,6 +72,13 @@ export default function Login() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="grid gap-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="email">Correo</Label>
               <Input

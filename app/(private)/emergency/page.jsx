@@ -88,7 +88,7 @@ export default function EmergencyPage() {
           description: "Número de emergencia guardado correctamente",
         });
       }
-      
+
       setIsDialogOpen(false);
       setFormData({
         number: "",
@@ -96,7 +96,7 @@ export default function EmergencyPage() {
         municipality: "",
         emergencyType: "",
       });
-      setEditingItem(null); 
+      setEditingItem(null);
       // Recargar la lista
       fetchEmergencyNumbers();
     } catch (error) {
@@ -150,7 +150,6 @@ export default function EmergencyPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Números de Emergencia</h1>
             <p className="text-muted-foreground">

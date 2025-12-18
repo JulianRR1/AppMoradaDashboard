@@ -83,7 +83,7 @@ export default function ResponsesPage() {
 
   const renderPreview = (encoded) => {
     console.log("Rendering preview for:", encoded);
-    
+
     if (!encoded || !encoded.data || typeof encoded.data !== "string")
       return null;
     if (encoded.contentType.startsWith("image")) {
@@ -115,7 +115,7 @@ export default function ResponsesPage() {
   function extractDriveFileId(url = "") {
     try {
       const u = new URL(url);
-      if (!/drive\.google\.com|docs\.google\.com/i.test(u.hostname)){
+      if (!/drive\.google\.com|docs\.google\.com/i.test(u.hostname)) {
         return null;
       }
 
@@ -162,7 +162,7 @@ export default function ResponsesPage() {
         })
       }
 
-      
+
       setIsDialogOpen(false)
       setFormData({ phase: "", type: "", level: "", response: "", videoUrl: "", videoAlt: "" })
       fetchTestResponses()
@@ -231,7 +231,6 @@ export default function ResponsesPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Respuestas del Test</h1>
             <p className="text-muted-foreground">Gestiona las respuestas según el puntaje obtenido</p>
@@ -313,7 +312,7 @@ export default function ResponsesPage() {
                   </p>
                   <Label>Video (url)</Label>
                   <Input
-                    type = "text"
+                    type="text"
                     inputMode="url"
                     pattern="(https?://.*)|(/api/media/.*)"
                     placeholder="https://example.com/video.mp4"
@@ -322,7 +321,7 @@ export default function ResponsesPage() {
                   />
                   <Label>Texto alternativo del video (alt)</Label>
                   <Input
-                    type = "text"
+                    type="text"
                     placeholder="Texto alternativo para el video"
                     value={formData.videoAlt || ""}
                     onChange={(e) => setFormData({ ...formData, videoAlt: e.target.value })}
