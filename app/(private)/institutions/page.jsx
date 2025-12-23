@@ -166,7 +166,7 @@ export default function InstitutionsPage() {
   const handleEdit = (item) => {
     setEditingItem(item);
     setFormData(item);
-    setIsDialogOpen(true);const municipios = states[item.state] || [];
+    setIsDialogOpen(true); const municipios = states[item.state] || [];
     setAvailableMunicipalities(municipios);
   }
 
@@ -191,7 +191,6 @@ export default function InstitutionsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Instituciones</h1>
             <p className="text-muted-foreground">Gestiona las instituciones por estado</p>

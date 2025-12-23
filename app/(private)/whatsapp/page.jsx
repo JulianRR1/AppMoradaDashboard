@@ -105,7 +105,6 @@ export default function WhatsAppPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Línea WhatsApp</h1>
             <p className="text-muted-foreground">Gestiona los números de contacto de WhatsApp</p>

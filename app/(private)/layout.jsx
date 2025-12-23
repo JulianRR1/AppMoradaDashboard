@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter} from "next/navigation"
+import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -20,7 +20,7 @@ export default function PrivateLayout({ children }) {
   }, [router])
 
   if (!ready) return null
-  
+
   return (
     <>
       <AppSidebar />

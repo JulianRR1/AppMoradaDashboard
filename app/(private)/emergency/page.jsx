@@ -35,12 +35,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
 import states from "@/public/estados.json";
 
+
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 export default function EmergencyPage() {
@@ -58,6 +69,8 @@ export default function EmergencyPage() {
 
   const [availableStates, setAvailableStates] = useState(Object.keys(states));
   const [availableMunicipalities, setAvailableMunicipalities] = useState([]);
+  const [deleteId, setDeleteId] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const handleStateChange = (value) => {
     setFormData({ ...formData, state: value, municipality: "" });
@@ -88,7 +101,7 @@ export default function EmergencyPage() {
           description: "Número de emergencia guardado correctamente",
         });
       }
-      
+
       setIsDialogOpen(false);
       setFormData({
         number: "",
@@ -96,7 +109,7 @@ export default function EmergencyPage() {
         municipality: "",
         emergencyType: "",
       });
-      setEditingItem(null); 
+      setEditingItem(null);
       // Recargar la lista
       fetchEmergencyNumbers();
     } catch (error) {
@@ -129,14 +142,20 @@ export default function EmergencyPage() {
     setAvailableMunicipalities(municipios);
   };
 
-  const handleDelete = async (_id) => {
+  const confirmDelete = (id) => {
+    setDeleteId(id);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const executeDelete = async () => {
     try {
-      await api.delete(`emergency/${_id}/`);
+      await api.delete(`emergency/${deleteId}/`);
       toast({
         title: "Eliminado",
         description: "Número de emergencia eliminado correctamente",
       });
       fetchEmergencyNumbers();
+      setIsDeleteConfirmOpen(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -150,7 +169,6 @@ export default function EmergencyPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger />
           <div>
             <h1 className="text-3xl font-bold">Números de Emergencia</h1>
             <p className="text-muted-foreground">
@@ -215,11 +233,6 @@ export default function EmergencyPage() {
                           {estado}
                         </SelectItem>
                       ))}
-                      {/*{mexicanStates.map((state) => (
-                        <SelectItem key={state} value={state}>
-                          {state.charAt(0).toUpperCase() + state.slice(1)}
-                        </SelectItem>
-                      ))}*/}
                     </SelectContent>
                   </Select>
                 </div>
@@ -242,16 +255,6 @@ export default function EmergencyPage() {
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/*<Input
-                    id="municipality"
-                    value={formData.municipality}
-                    onChange={(e) =>
-                      setFormData({ ...formData, municipality: e.target.value })
-                    }
-                    placeholder="cuernavaca"
-                    required
-                  />*/}
                 </div>
 
                 <div className="grid gap-2">
@@ -268,19 +271,6 @@ export default function EmergencyPage() {
                       <SelectItem value="línea mujeres">Línea Mujeres</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  {/*<Input
-                    id="emergencyType"
-                    value={formData.emergencyType}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        emergencyType: e.target.value,
-                      })
-                    }
-                    placeholder="línea mujeres"
-                    required
-                  />*/}
                 </div>
               </div>
               <DialogFooter>
@@ -292,7 +282,7 @@ export default function EmergencyPage() {
           </DialogContent>
         </Dialog>
       </div>
-
+ao
       <Card>
         <CardHeader>
           <CardTitle>Lista de Números de Emergencia</CardTitle>
@@ -332,7 +322,7 @@ export default function EmergencyPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDelete(item._id)}
+                        onClick={() => confirmDelete(item._id)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -343,6 +333,20 @@ export default function EmergencyPage() {
             </TableBody>
           </Table>
         </CardContent>
+        <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Esto eliminará permanentemente el número de emergencia.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={executeDelete}>Eliminar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
     </div>
   );

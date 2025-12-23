@@ -10,12 +10,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { Phone, FileText, HelpCircle, Building, MessageCircle, Heart, Users, MapPin, Shield, Home } from "lucide-react"
+import { Phone, FileText, HelpCircle, Building, MessageCircle, MapPin, Shield, Home } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { LogOut } from "lucide-react"
-import { Button } from "@/components/ui/button"
+
 
 
 const menuItems = [
@@ -44,11 +46,6 @@ const menuItems = [
     url: "/responses",
     icon: Shield,
   },
-  /*{
-    title: "Estados",
-    url: "/states",
-    icon: MapPin,
-  },*/
   {
     title: "Instituciones",
     url: "/institutions",
@@ -59,30 +56,24 @@ const menuItems = [
     url: "/whatsapp",
     icon: MessageCircle,
   },
-  /*{
-    title: "Instituciones de Apoyo",
-    url: "/support-institutions",
-    icon: Heart,
-  },
-  {
-    title: "Aliados Institucionales",
-    url: "/institutional-allies",
-    icon: Users,
-  },*/
 ]
 
 export function AppSidebar() {
 
   const router = useRouter()
+  const pathname = usePathname()
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="p-4">
-          <h2 className="text-lg font-semibold">Dashboard Admin</h2>
-          <p className="text-sm text-muted-foreground">App de Apoyo</p>
+    <Sidebar collapsible="icon">
+
+      <SidebarHeader className="flex flex-col items-center justify-center py-4 relative transition-all">
+        <SidebarTrigger className="absolute left-2 top-4 text-sidebar-foreground transition-all group-data-[collapsible=icon]:relative group-data-[collapsible=icon]:left-0 group-data-[collapsible=icon]:top-0 group-data-[collapsible=icon]:mb-2" />
+        <div className="bg-sidebar-primary text-sidebar-primary-foreground p-2 rounded-full w-12 h-12 flex items-center justify-center mt-8 group-data-[collapsible=icon]:mt-0 transition-all">
+          <MapPin className="!w-6 !h-6" strokeWidth={2.5} />
         </div>
+        <span className="text-sm font-bold mt-2 group-data-[collapsible=icon]:hidden">App Morada</span>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Gestión de Contenido</SidebarGroupLabel>
@@ -90,10 +81,18 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    isActive={pathname === item.url}
+                    className="hover:translate-x-1 transition-transform duration-200"
+                  >
                     <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <item.icon
+                        className={`!w-6 !h-6 ${pathname === item.url ? "text-sidebar-primary" : ""}`}
+                        strokeWidth={2.5}
+                      />
+                      <span className="text-base font-medium group-data-[collapsible=icon]:hidden">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -101,30 +100,23 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Cuenta</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      sessionStorage.removeItem("token")
-                      router.push("/")
-                    }}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar sesión
-                  </Button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuButton
+            tooltip="Cerrar sesión"
+            onClick={() => {
+              sessionStorage.removeItem("token")
+              router.push("/")
+            }}
+            className="w-full justify-start hover:translate-x-1 transition-transform duration-200"
+          >
+            <LogOut className="!w-6 !h-6" strokeWidth={2.5} />
+            <span className="text-base font-medium group-data-[collapsible=icon]:hidden">Cerrar sesión</span>
+          </SidebarMenuButton>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }
