@@ -2,7 +2,13 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=11"
+  },
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",

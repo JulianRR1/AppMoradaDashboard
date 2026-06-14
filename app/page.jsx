@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
+import { setToken, getToken } from "@/lib/auth";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -26,7 +27,7 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
 
   useEffect(() => {
-    const token = sessionStorage.getItem("token");
+    const token = getToken();
     if (token) {
       router.replace("/dashboard");
     }
@@ -43,7 +44,7 @@ export default function Login() {
       console.log("Token:", data.token);
       if (!data.token) throw new Error("No se recibió el token");
       console.log("Usuario:", data.token);
-      sessionStorage.setItem("token", data.token);
+      setToken(data.token);
       router.push("/dashboard");
     } catch (error) {
       if (error?.response?.status === 401) {

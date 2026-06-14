@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DataTable } from "@/components/ui/data-table"
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Plus, Edit, Trash2, MessageCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useFormDraft } from "@/hooks/use-form-draft"
 import api from "@/lib/api"
 
 
@@ -30,14 +32,29 @@ export default function WhatsAppPage() {
     name: "",
   })
   const [loading, setLoading] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [errors, setErrors] = useState({})
   const { toast } = useToast()
+
+  // Borrador: conserva los datos si la sesión expira o se recarga (WCAG 2.2.1).
+  const { clearDraft } = useFormDraft("whatsapp", formData, setFormData, isDialogOpen)
 
   useEffect(() => {
     fetchWhatsAppLines()
   }, [])
 
+  // Validación en español ANTES de enviar (WCAG 3.3.1/3.3.3).
+  const validate = () => {
+    const next = {}
+    if (!/^\d{10}$/.test(formData.number)) next.number = "Ingresa un número de 10 dígitos."
+    if (!formData.name?.trim()) next.name = "Ingresa el nombre del operador."
+    setErrors(next)
+    return Object.keys(next).length === 0
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validate()) return
     setLoading(true)
 
     try {
@@ -57,11 +74,13 @@ export default function WhatsAppPage() {
 
       setIsDialogOpen(false)
       setFormData({ number: "", name: "" })
+      setErrors({})
+      clearDraft()
       fetchWhatsAppLines()
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "No se pudo guardar la línea de WhatsApp",
+        description: "No se pudo guardar la línea de WhatsApp. Revisa los datos e inténtalo de nuevo.",
         variant: "destructive",
       })
     } finally {
@@ -71,10 +90,13 @@ export default function WhatsAppPage() {
 
   const fetchWhatsAppLines = async () => {
     try {
+      setIsLoadingData(true)
       const response = await api.get("line/")
       setWhatsappLines(response.data)
     } catch (error) {
       console.error("Error fetching WhatsApp lines:", error)
+    } finally {
+      setIsLoadingData(false)
     }
   }
 
@@ -102,11 +124,11 @@ export default function WhatsAppPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Línea WhatsApp</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Línea WhatsApp</h1>
             <p className="text-muted-foreground">Gestiona los números de contacto de WhatsApp</p>
           </div>
         </div>
@@ -128,29 +150,56 @@ export default function WhatsAppPage() {
               <DialogTitle>{editingItem ? "Editar" : "Agregar"} Línea WhatsApp</DialogTitle>
               <DialogDescription>Completa la información del operador de WhatsApp</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
+              <p className="text-sm text-muted-foreground">
+                Los campos con <span aria-hidden="true">*</span> son obligatorios.
+              </p>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="number">Número de WhatsApp</Label>
+                  <Label htmlFor="number">
+                    Número de WhatsApp <span aria-hidden="true" className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="number"
                     value={formData.number}
-                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "").slice(0, 10)
+                      setFormData({ ...formData, number: value })
+                    }}
                     placeholder="5523489128"
+                    maxLength={10}
+                    type="tel"
+                    inputMode="numeric"
                     required
+                    aria-required="true"
+                    aria-invalid={errors.number ? "true" : undefined}
+                    aria-describedby={errors.number ? "number-help number-error" : "number-help"}
                   />
-                  <p className="text-sm text-muted-foreground">Ingresa el número sin espacios ni guiones</p>
+                  <p id="number-help" className="text-sm text-muted-foreground">
+                    Ingresa el número sin espacios ni guiones. Ej. 5512345678 (10 dígitos).
+                  </p>
+                  {errors.number && (
+                    <p id="number-error" className="text-sm text-destructive">{errors.number}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="name">Nombre del Operador</Label>
+                  <Label htmlFor="name">
+                    Nombre del Operador <span aria-hidden="true" className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="jose julian"
                     required
+                    aria-required="true"
+                    aria-invalid={errors.name ? "true" : undefined}
+                    aria-describedby={errors.name ? "name-error" : undefined}
                   />
+                  {errors.name && (
+                    <p id="name-error" className="text-sm text-destructive">{errors.name}</p>
+                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -163,46 +212,28 @@ export default function WhatsAppPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Líneas WhatsApp</CardTitle>
-          <CardDescription>Todos los operadores de WhatsApp registrados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Nombre del Operador</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {whatsappLines.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-green-600" />
-                      {item.number}
-                    </div>
-                  </TableCell>
-                  <TableCell className="capitalize">{item.name}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <DataTable
+        icon={MessageCircle}
+        columns={[
+          {
+            header: "Número",
+            cell: (item) => (
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-green-600" />
+                {item.number}
+              </div>
+            )
+          },
+          { header: "Nombre del Operador", cell: (item) => <span className="capitalize">{item.name}</span> },
+        ]}
+        data={whatsappLines}
+        isLoading={isLoadingData}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        skeletonColumns={3}
+        caption="Líneas de WhatsApp"
+        getRowLabel={(item) => `línea de ${item.name || item.number || "WhatsApp"}`}
+      />
     </div>
   )
 }

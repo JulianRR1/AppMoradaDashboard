@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DataTable } from "@/components/ui/data-table"
 import {
   Dialog,
   DialogContent,
@@ -18,8 +19,9 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus, Edit, Trash2, Shield } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useFormDraft } from "@/hooks/use-form-draft"
 import api from "@/lib/api"
 import { set } from "react-hook-form";
 
@@ -43,7 +45,10 @@ export default function ResponsesPage() {
     videoAlt: "",
   })
   const [loading, setLoading] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(true)
+  const [errors, setErrors] = useState({})
   const { toast } = useToast()
+  const { clearDraft } = useFormDraft("responses", formData, setFormData, isDialogOpen)
   const [videoPreview, setVideoPreview] = useState(null);
 
   useEffect(() => {
@@ -143,8 +148,19 @@ export default function ResponsesPage() {
     return raw;
   }
 
+  const validate = () => {
+    const next = {};
+    if (!formData.phase) next.phase = "Selecciona una fase.";
+    if (!formData.type) next.type = "Selecciona un tipo.";
+    if (!formData.level) next.level = "Selecciona un nivel.";
+    if (!formData.response?.trim()) next.response = "Escribe la respuesta.";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validate()) return;
     setLoading(true)
 
     try {
@@ -165,11 +181,13 @@ export default function ResponsesPage() {
 
       setIsDialogOpen(false)
       setFormData({ phase: "", type: "", level: "", response: "", videoUrl: "", videoAlt: "" })
+      setErrors({})
+      clearDraft()
       fetchTestResponses()
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "No se pudo guardar la respuesta",
+        description: "No se pudo guardar la respuesta. Revisa los datos e inténtalo de nuevo.",
         variant: "destructive",
       })
     } finally {
@@ -179,10 +197,13 @@ export default function ResponsesPage() {
 
   const fetchTestResponses = async () => {
     try {
+      setIsLoadingData(true)
       const response = await api.get("response/")
       setTestResponses(response.data)
     } catch (error) {
       console.error("Error fetching test responses:", error)
+    } finally {
+      setIsLoadingData(false)
     }
   }
 
@@ -228,11 +249,11 @@ export default function ResponsesPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Respuestas del Test</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Respuestas del Test</h1>
             <p className="text-muted-foreground">Gestiona las respuestas según el puntaje obtenido</p>
           </div>
         </div>
@@ -254,12 +275,19 @@ export default function ResponsesPage() {
               <DialogTitle>{editingItem ? "Editar" : "Agregar"} Respuesta</DialogTitle>
               <DialogDescription>Configura la respuesta según el puntaje del test</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="grid gap-4 py-4">
+                <p className="text-sm text-muted-foreground">Los campos con <span aria-hidden="true">*</span> son obligatorios.</p>
                 <div className="grid gap-2">
-                  <Label htmlFor="part">Fase</Label>
+                  <Label htmlFor="phase">Fase <span aria-hidden="true" className="text-destructive">*</span></Label>
                   <Select value={formData.phase} onValueChange={(value) => setFormData({ ...formData, phase: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="phase"
+                      aria-label="Fase"
+                      aria-required="true"
+                      aria-invalid={errors.phase ? "true" : undefined}
+                      aria-describedby={errors.phase ? "phase-error" : undefined}
+                    >
                       <SelectValue placeholder="Selecciona la fase" />
                     </SelectTrigger>
                     <SelectContent>
@@ -268,12 +296,21 @@ export default function ResponsesPage() {
                       <SelectItem value="3">Fase 3</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.phase && (
+                    <p id="phase-error" className="text-sm text-destructive">{errors.phase}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="type">Tipo</Label>
+                  <Label htmlFor="type">Tipo <span aria-hidden="true" className="text-destructive">*</span></Label>
                   <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="type"
+                      aria-label="Tipo"
+                      aria-required="true"
+                      aria-invalid={errors.type ? "true" : undefined}
+                      aria-describedby={errors.type ? "type-error" : undefined}
+                    >
                       <SelectValue placeholder="Selecciona el tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -281,12 +318,21 @@ export default function ResponsesPage() {
                       <SelectItem value="accion">Acción</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.type && (
+                    <p id="type-error" className="text-sm text-destructive">{errors.type}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="level">Nivel</Label>
+                  <Label htmlFor="level">Nivel <span aria-hidden="true" className="text-destructive">*</span></Label>
                   <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id="level"
+                      aria-label="Nivel"
+                      aria-required="true"
+                      aria-invalid={errors.level ? "true" : undefined}
+                      aria-describedby={errors.level ? "level-error" : undefined}
+                    >
                       <SelectValue placeholder="Selecciona el nivel" />
                     </SelectTrigger>
                     <SelectContent>
@@ -295,23 +341,32 @@ export default function ResponsesPage() {
                       <SelectItem value="alta">Alta</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.level && (
+                    <p id="level-error" className="text-sm text-destructive">{errors.level}</p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="response">Respuesta</Label>
+                  <Label htmlFor="response">Respuesta <span aria-hidden="true" className="text-destructive">*</span></Label>
                   <Textarea
                     id="response"
                     value={formData.response}
                     onChange={(e) => setFormData({ ...formData, response: e.target.value })}
                     placeholder="Ten cuidado, la violencia aumentará... **¿Qué hacer?** Debes reconocer que te encuentras ya en las primeras fases del ciclo..."
                     rows={6}
-                    required
+                    aria-required="true"
+                    aria-invalid={errors.response ? "true" : undefined}
+                    aria-describedby={errors.response ? "response-error" : undefined}
                   />
+                  {errors.response && (
+                    <p id="response-error" className="text-sm text-destructive">{errors.response}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     Puedes usar **texto** para negrita y incluir la sección "¿Qué hacer?" al final
                   </p>
-                  <Label>Video (url)</Label>
+                  <Label htmlFor="videoUrl">Video (URL)</Label>
                   <Input
+                    id="videoUrl"
                     type="text"
                     inputMode="url"
                     pattern="(https?://.*)|(/api/media/.*)"
@@ -319,8 +374,9 @@ export default function ResponsesPage() {
                     value={formData.videoUrl || ""}
                     onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                   />
-                  <Label>Texto alternativo del video (alt)</Label>
+                  <Label htmlFor="videoAlt">Texto alternativo del video (alt)</Label>
                   <Input
+                    id="videoAlt"
                     type="text"
                     placeholder="Texto alternativo para el video"
                     value={formData.videoAlt || ""}
@@ -350,45 +406,38 @@ export default function ResponsesPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Respuestas</CardTitle>
-          <CardDescription>Respuestas configuradas según puntaje del test</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fase</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Nivel</TableHead>
-                <TableHead>Respuesta</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {testResponses.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>Fase {item.phase}</TableCell>
-                  <TableCell className="capitalize">{item.type}</TableCell>
-                  <TableCell className="capitalize">{item.level}</TableCell>
-                  <TableCell className="max-w-xs truncate">{item.response}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item._id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <DataTable
+        icon={Shield}
+        columns={[
+          { header: "Fase", cell: (item) => `Fase ${item.phase}` },
+          { header: "Tipo", cell: (item) => <span className="capitalize">{item.type}</span> },
+          { header: "Nivel", cell: (item) => <LevelPill level={item.level} /> },
+          { header: "Respuesta", cell: (item) => <span className="max-w-xs truncate block">{item.response}</span> },
+        ]}
+        data={testResponses}
+        isLoading={isLoadingData}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        skeletonColumns={5}
+        caption="Respuestas del test"
+        getRowLabel={(item) => `respuesta de fase ${item.phase} (${item.level})`}
+      />
     </div>
+  )
+}
+
+// Etiqueta de color por nivel de riesgo (verde→ámbar→rojo).
+const LEVEL_PILL = {
+  baja: "bg-green-100 text-green-800",
+  media: "bg-amber-100 text-amber-800",
+  alta: "bg-red-100 text-red-800",
+}
+
+function LevelPill({ level }) {
+  const cls = LEVEL_PILL[(level || "").toLowerCase()] || "bg-secondary text-secondary-foreground"
+  return (
+    <span className={`inline-block text-xs px-2.5 py-0.5 rounded-full capitalize ${cls}`}>
+      {level || "—"}
+    </span>
   )
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,14 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/ui/data-table";
 import {
   Dialog,
   DialogContent,
@@ -37,9 +31,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Plus, Edit, Trash2, X } from "lucide-react";
+import { Plus, Edit, Trash2, X, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { set } from "react-hook-form";
 
 const API_ORIGIN = (() => {
@@ -100,7 +95,22 @@ export default function InformationPage() {
     imageAlt: "Portada de la guía de preparación para sismos",
   });
   const [loading, setLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [errors, setErrors] = useState({});
   const { toast } = useToast();
+  const { clearDraft } = useFormDraft(
+    "information",
+    formData,
+    setFormData,
+    isDialogOpen
+  );
+
+  const validate = () => {
+    const next = {};
+    if (!formData.title?.trim()) next.title = "Ingresa el título.";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   useEffect(() => {
     fetchInformationCards();
@@ -162,6 +172,7 @@ export default function InformationPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
 
     try {
@@ -199,13 +210,13 @@ export default function InformationPage() {
         imageUrl: "",
         imageAlt: "",
       });
+      setErrors({});
+      clearDraft();
       fetchInformationCards();
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message ||
-          "No se pudo guardar la card informativa",
+        description: "No se pudo guardar la información. Revisa los datos e inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -215,10 +226,13 @@ export default function InformationPage() {
 
   const fetchInformationCards = async () => {
     try {
+      setIsLoadingData(true);
       const response = await api.get("information/");
       setInformationCards(response.data);
     } catch (error) {
       console.error("Error fetching information cards:", error);
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
@@ -295,11 +309,11 @@ export default function InformationPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Informacion de apoyo</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Informacion de apoyo</h1>
             <p className="text-muted-foreground">
               Gestiona el contenido informativo de la app
             </p>
@@ -343,10 +357,19 @@ export default function InformationPage() {
                 Completa la información de la card
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="grid gap-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Los campos con <span aria-hidden="true">*</span> son
+                  obligatorios.
+                </p>
                 <div className="grid gap-2">
-                  <Label htmlFor="title">Título</Label>
+                  <Label htmlFor="title">
+                    Título{" "}
+                    <span aria-hidden="true" className="text-destructive">
+                      *
+                    </span>
+                  </Label>
                   <Input
                     id="title"
                     value={formData.title}
@@ -354,11 +377,19 @@ export default function InformationPage() {
                       setFormData({ ...formData, title: e.target.value })
                     }
                     placeholder="1 . ¿Qué es la violencia de género?"
-                    required
+                    aria-required="true"
+                    aria-invalid={errors.title ? "true" : undefined}
+                    aria-describedby={errors.title ? "title-error" : undefined}
                   />
+                  {errors.title && (
+                    <p id="title-error" className="text-sm text-destructive">
+                      {errors.title}
+                    </p>
+                  )}
                 </div>
-                <Label>Imagen principal</Label>
+                <Label htmlFor="imageUrl">Imagen principal</Label>
                 <Input
+                  id="imageUrl"
                   type="text"
                   inputMode="url"
                   value={formData.imageUrl || ""}
@@ -368,8 +399,9 @@ export default function InformationPage() {
                   placeholder="https://example.com/cover.jpg  o  /api/media/drive/ID"
                 />
 
-                <Label>Texto alterno de la imagen</Label>
+                <Label htmlFor="imageAlt">Texto alterno de la imagen</Label>
                 <Input
+                  id="imageAlt"
                   type="text"
                   value={formData.imageAlt}
                   onChange={(e) =>
@@ -387,8 +419,9 @@ export default function InformationPage() {
                   </div>
                 )}
 
-                <Label>Link del archivo PDF/Word</Label>
+                <Label htmlFor="fileUrl">Link del archivo PDF/Word</Label>
                 <Input
+                  id="fileUrl"
                   type="text"
                   inputMode="url"
                   value={formData.fileUrl || ""}
@@ -398,8 +431,9 @@ export default function InformationPage() {
                   placeholder="https://example.com/file.pdf  o  /api/media/drive/ID"
                 />
 
-                <Label>Texto alterno del archivo</Label>
+                <Label htmlFor="fileAlt">Texto alterno del archivo</Label>
                 <Input
+                  id="fileAlt"
                   type="text"
                   value={formData.fileAlt}
                   onChange={(e) =>
@@ -446,15 +480,18 @@ export default function InformationPage() {
                               type="button"
                               variant="ghost"
                               size="sm"
+                              aria-label={`Eliminar sección ${index + 1}`}
                               onClick={() => removeDescriptionItem(index)}
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-4 h-4" aria-hidden="true" />
                             </Button>
                           )}
                         </div>
 
                         <div className="grid gap-2">
+                          <Label htmlFor={`desc-${index}-subtitle`}>Subtítulo</Label>
                           <Input
+                            id={`desc-${index}-subtitle`}
                             placeholder="Subtítulo"
                             value={item.subtitle || ""}
                             onChange={(e) =>
@@ -465,7 +502,9 @@ export default function InformationPage() {
                               )
                             }
                           />
+                          <Label htmlFor={`desc-${index}-information`}>Información</Label>
                           <Textarea
+                            id={`desc-${index}-information`}
                             placeholder="Información"
                             value={item.information || ""}
                             onChange={(e) =>
@@ -480,8 +519,9 @@ export default function InformationPage() {
                           <div className="grid gap-4 md:grid-cols-2">
                             {/* Imagen sección */}
                             <div className="grid gap-2">
-                              <Label>Imagen (URL)</Label>
+                              <Label htmlFor={`desc-${index}-imageUrl`}>Imagen (URL)</Label>
                               <Input
+                                id={`desc-${index}-imageUrl`}
                                 type="text"
                                 inputMode="url"
                                 placeholder="https://example.com/image2.jpg  o  /api/media/drive/ID"
@@ -494,8 +534,9 @@ export default function InformationPage() {
                                   )
                                 }
                               />
-                              <Label>Texto alternativo imagen</Label>
+                              <Label htmlFor={`desc-${index}-imageAlt`}>Texto alternativo imagen</Label>
                               <Input
+                                id={`desc-${index}-imageAlt`}
                                 type="text"
                                 placeholder="Persona agachada durante un sismo"
                                 value={item.imageAlt || ""}
@@ -523,8 +564,9 @@ export default function InformationPage() {
 
                             {/* Video sección */}
                             <div className="grid gap-2">
-                              <Label>Video (URL)</Label>
+                              <Label htmlFor={`desc-${index}-videoUrl`}>Video (URL)</Label>
                               <Input
+                                id={`desc-${index}-videoUrl`}
                                 type="text"
                                 inputMode="url"
                                 placeholder="https://example.com/video2.mp4  o  /api/media/drive/ID"
@@ -537,8 +579,9 @@ export default function InformationPage() {
                                   )
                                 }
                               />
-                              <Label>Texto alternativo video</Label>
+                              <Label htmlFor={`desc-${index}-videoAlt`}>Texto alternativo video</Label>
                               <Input
+                                id={`desc-${index}-videoAlt`}
                                 type="text"
                                 placeholder="Video sobre qué hacer durante un sismo"
                                 value={item.videoAlt || ""}
@@ -584,51 +627,20 @@ export default function InformationPage() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Informacion sobre violecnia</CardTitle>
-          <CardDescription>
-            Todas la informacion registradas en el sistema
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Secciones</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {informationCards.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.tittle}</TableCell>
-                  <TableCell>{item.description.length} secciones</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(item._id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <DataTable
+        icon={FileText}
+        columns={[
+          { header: "Título", accessorKey: "tittle" },
+          { header: "Secciones", cell: (item) => `${item.description?.length ?? 0} secciones` },
+        ]}
+        data={informationCards}
+        isLoading={isLoadingData}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        skeletonColumns={3}
+        caption="Información sobre violencia"
+        getRowLabel={(item) => `información "${item.tittle || item.title || ""}"`}
+      />
     </div>
   );
 }

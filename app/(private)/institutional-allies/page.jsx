@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DataTable } from "@/components/ui/data-table"
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export default function InstitutionalAlliesPage() {
   })
   const [imageFile, setImageFile] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(true)
   const { toast } = useToast()
 
   const handleSubmit = async (e) => {
@@ -60,10 +62,13 @@ export default function InstitutionalAlliesPage() {
 
   const fetchInstitutionalAllies = async () => {
     try {
+      setIsLoadingData(true)
       const response = await api.get("institutional-allies/")
       setInstitutionalAllies(response.data)
     } catch (error) {
       console.error("Error fetching institutional allies:", error)
+    } finally {
+      setIsLoadingData(false)
     }
   }
 
@@ -183,45 +188,32 @@ export default function InstitutionalAlliesPage() {
           <CardDescription>Todos los aliados institucionales registrados</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Imagen</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {institutionalAllies.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    {item.image ? (
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.title}
-                        className="w-12 h-12 object-cover rounded-md"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{item.title}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+          <DataTable
+            columns={[
+              {
+                header: "Imagen",
+                cell: (item) => (
+                  item.image ? (
+                    <img
+                      src={item.image || "/placeholder.svg"}
+                      alt={item.title}
+                      className="w-12 h-12 object-cover rounded-md"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-gray-400" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  )
+                )
+              },
+              { header: "Título", accessorKey: "title" },
+            ]}
+            data={institutionalAllies}
+            isLoading={isLoadingData}
+            onEdit={handleEdit}
+            onDelete={(id) => handleDelete(id)}
+            skeletonColumns={3}
+          />
         </CardContent>
       </Card>
     </div>
