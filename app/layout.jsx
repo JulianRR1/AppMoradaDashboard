@@ -1,5 +1,5 @@
+import { ThemeProvider } from "@/components/theme-provider"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 
@@ -7,9 +7,11 @@ export default function RootLayout({ children }) {
 
 
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body>
-        <SidebarProvider>{children}</SidebarProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <SidebarProvider>{children}</SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

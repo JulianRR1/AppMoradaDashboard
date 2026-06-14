@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Toaster } from "@/components/ui/toaster"
 import { SessionTimeout } from "@/components/session-timeout"
 import { getToken, clearToken } from "@/lib/auth"
@@ -60,6 +61,7 @@ export default function PrivateLayout({ children }) {
         <header className="sticky top-0 z-20 flex items-center gap-2 border-b bg-background px-4 py-2.5 md:hidden">
           <SidebarTrigger className="text-foreground" />
           <span className="font-semibold">{PAGE_TITLES[pathname] || "App Morada"}</span>
+          <ThemeToggle className="ml-auto" />
         </header>
         {children}
       </main>

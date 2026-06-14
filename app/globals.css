@@ -25,10 +25,10 @@ body {
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted-foreground: 0 0% 43%; /* 4.7:1 sobre muted, 5.13:1 sobre blanco (WCAG 1.4.3) */
     --accent: 0 0% 96.1%;
     --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84.2% 48%; /* 4.86:1 sobre blanco para texto/borde de error (WCAG 1.4.3) */
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 45%;
@@ -50,38 +50,39 @@ body {
   }
 
   .dark {
-    --background: 0 0% 3.9%;
+    /* Paleta oscura con contraste WCAG verificado (texto ≥4.5:1, controles ≥3:1). */
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 0 0% 11%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 11%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --secondary: 0 0% 16%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 66%; /* 7.9:1 sobre fondo, 6.2:1 sobre muted */
+    --accent: 0 0% 18%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --destructive: 0 72% 62%; /* texto error 5.2:1; con fg oscuro como botón 4.6:1 */
+    --destructive-foreground: 0 0% 12%;
+    --border: 0 0% 20%; /* separadores decorativos (sutil) */
+    --input: 0 0% 42%; /* borde de campos: 3.5:1 sobre fondo, 3.2:1 sobre card */
+    --ring: 0 0% 72%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 270 50% 98%;
-    --sidebar-foreground: 270 40% 20%;
-    --sidebar-primary: 270 60% 50%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 270 30% 94%;
-    --sidebar-accent-foreground: 270 60% 40%;
-    --sidebar-border: 270 20% 92%;
-    --sidebar-ring: 270 60% 50%;
+    --sidebar-background: 270 16% 12%;
+    --sidebar-foreground: 270 15% 90%;
+    --sidebar-primary: 270 70% 68%; /* 5.25:1 sobre el fondo del sidebar */
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 270 20% 20%;
+    --sidebar-accent-foreground: 270 20% 96%;
+    --sidebar-border: 270 14% 24%;
+    --sidebar-ring: 270 70% 68%;
   }
 }
 

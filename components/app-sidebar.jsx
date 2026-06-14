@@ -16,10 +16,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
-  Phone, FileText, HelpCircle, Building, MessageCircle, MapPin, Shield, Home, LogOut,
+  Phone, FileText, HelpCircle, Building, MessageCircle, MapPin, Shield, Home, LogOut, Moon, Sun,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
 import { clearToken, getUserEmail } from "@/lib/auth"
 
 // Mismos enlaces de siempre, organizados en secciones para mejor escaneabilidad.
@@ -60,6 +61,9 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
   const [email, setEmail] = useState("")
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  const isDark = mounted && resolvedTheme === "dark"
 
   // En móvil, cerrar el cajón al navegar a otra sección.
   const closeOnMobile = () => {
@@ -68,6 +72,7 @@ export function AppSidebar() {
 
   useEffect(() => {
     setEmail(getUserEmail() || "")
+    setMounted(true)
   }, [])
 
   const initials = (email ? email.split("@")[0] : "")
@@ -150,6 +155,23 @@ export function AppSidebar() {
           </span>
         </div>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+              aria-pressed={mounted ? isDark : undefined}
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className="text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            >
+              {isDark ? (
+                <Sun className="!w-5 !h-5" strokeWidth={2.25} aria-hidden="true" />
+              ) : (
+                <Moon className="!w-5 !h-5" strokeWidth={2.25} aria-hidden="true" />
+              )}
+              <span className="font-medium group-data-[collapsible=icon]:hidden">
+                {isDark ? "Modo claro" : "Modo oscuro"}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Cerrar sesión"
